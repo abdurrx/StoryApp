@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
+import com.dicoding.storyapp.R
 import com.dicoding.storyapp.databinding.FragmentDetailStoryBinding
 import com.dicoding.storyapp.utils.AnimationUtil
 import com.dicoding.storyapp.utils.ResultState
@@ -37,7 +38,7 @@ class DetailStoryFragment : Fragment() {
         detailStoryViewModel.getBy(DetailStoryFragmentArgs.fromBundle(arguments as Bundle).id)
 
         // Button Menu
-        fragmentDetailStoryBinding.toolbar.title = "Detail Story"
+        fragmentDetailStoryBinding.toolbar.title = getString(R.string.detail_story)
 
         // Result
         detailStoryViewModel.result.observe(viewLifecycleOwner) { status ->
@@ -64,7 +65,7 @@ class DetailStoryFragment : Fragment() {
                     Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
                 }
 
-                else -> {
+                is ResultState.Loading -> {
                     Toast.makeText(requireContext(), "Loading", Toast.LENGTH_SHORT).show()
                 }
             }

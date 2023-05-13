@@ -13,9 +13,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.dicoding.storyapp.R
 import com.dicoding.storyapp.data.repository.RepositoryImpl
-import com.dicoding.storyapp.data.response.story.Story
 import com.dicoding.storyapp.data.source.local.UserPreferenceImpl
 import com.dicoding.storyapp.databinding.FragmentStoryBinding
+import com.dicoding.storyapp.ui.story.adapter.LoadingStateAdapter
 import com.dicoding.storyapp.ui.story.adapter.StoryAdapter
 import com.dicoding.storyapp.utils.ResultState
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,9 +51,16 @@ class StoryFragment : Fragment() {
         }
 
         // Button Menu
-        fragmentStoryBinding.toolbar.title = "Stories"
+        fragmentStoryBinding.toolbar.title = getString(R.string.stories)
         fragmentStoryBinding.toolbar.inflateMenu(R.menu.menu)
         fragmentStoryBinding.toolbar.menu
+
+        // Maps
+        fragmentStoryBinding.toolbar.menu.findItem(R.id.menu_map).setOnMenuItemClickListener {
+            val action = StoryFragmentDirections.actionStoryFragmentToMapsFragment()
+            findNavController().navigate(action)
+            true
+        }
 
         // Logout
         fragmentStoryBinding.toolbar.menu.findItem(R.id.menu_logout).setOnMenuItemClickListener {
@@ -74,8 +81,13 @@ class StoryFragment : Fragment() {
         fragmentStoryBinding.rvStories.layoutManager = LinearLayoutManager(requireContext())
 
         // Adapter
-        storyAdapter = StoryAdapter(requireContext(), listOf<Story>())
-        fragmentStoryBinding.rvStories.adapter = storyAdapter
+        storyAdapter = StoryAdapter(requireContext())
+        fragmentStoryBinding.rvStories.adapter = storyAdapter.withLoadStateFooter(
+            footer = LoadingStateAdapter {
+                storyAdapter.retry()
+            }
+        )
+
         storyViewModel.getAllStory()
 
         // Swipe Refresh
@@ -97,7 +109,11 @@ class StoryFragment : Fragment() {
                         fragmentStoryBinding.progressBar.visibility = View.GONE
                     }
 
-                    storyAdapter.submitList(it.listStory)
+                    storyViewModel.getStoryPaging().observe(viewLifecycleOwner) {
+                        storyAdapter.submitData(lifecycle, it)
+                        val snapshot = storyAdapter.snapshot()
+                        Log.d("Result", "storyResult: ${snapshot.size}")
+                    }
 
                     Toast.makeText(requireContext(), "Success", Toast.LENGTH_SHORT).show()
 
@@ -110,7 +126,7 @@ class StoryFragment : Fragment() {
                     showLoading(false)
                 }
 
-                else -> {
+                is ResultState.Loading -> {
                     Toast.makeText(requireContext(), "Loading", Toast.LENGTH_SHORT).show()
                     showLoading(true)
                 }

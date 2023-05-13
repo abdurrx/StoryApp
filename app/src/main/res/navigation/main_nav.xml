@@ -50,6 +50,9 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/main_nav"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_storyFragment_to_mapsFragment"
+            app:destination="@id/mapsFragment" />
     </fragment>
 
     <fragment
@@ -68,5 +71,10 @@
         android:label="fragment_add_story"
         tools:layout="@layout/fragment_add_story" >
     </fragment>
+    <fragment
+        android:id="@+id/mapsFragment"
+        android:name="com.dicoding.storyapp.ui.story.maps.MapsFragment"
+        android:label="fragment_maps"
+        tools:layout="@layout/fragment_maps" />
 
 </navigation>

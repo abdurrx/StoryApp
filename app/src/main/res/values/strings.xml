@@ -18,6 +18,7 @@
     <string name="add_button">Tambah</string>
 
     <string name="menu_logout">Logout</string>
+    <string name="maps">Maps</string>
 
     <string name="preview">Image Preview</string>
 
@@ -25,9 +26,16 @@
     <string name="gallery">Gallery</string>
     <string name="upload">Upload</string>
 
+    <string name="enter_email">Masukkan email anda</string>
     <string name="enter_name">Masukkan nama anda</string>
     <string name="enter_password">Masukkan password anda</string>
     <string name="enter_confirm">Masukkan password anda kembali</string>
 
-    <string name="welcome_user">Hello, %1$s.</string>
+    <string name="stories">Stories</string>
+    <string name="detail_story">Detail Story</string>
+
+    <string name="add_story">Add Story</string>
+    <string name="location">Bagikan Lokasi</string>
+
+    <string name="retry">Retry</string>
 </resources>

@@ -3,7 +3,9 @@ package com.dicoding.storyapp.ui.story.add
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.viewModels
+import com.dicoding.storyapp.R
 import com.dicoding.storyapp.databinding.FragmentAddStoryBinding
 import com.dicoding.storyapp.ui.MainActivity
 import com.dicoding.storyapp.utils.AnimationUtil
@@ -25,7 +28,12 @@ import com.dicoding.storyapp.utils.ResultState
 import com.dicoding.storyapp.utils.createCustomTempFile
 import com.dicoding.storyapp.utils.reduceFileImage
 import com.dicoding.storyapp.utils.uriToFile
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 @AndroidEntryPoint
@@ -37,11 +45,17 @@ class AddStoryFragment : Fragment() {
 
     private lateinit var currentPhotoPath: String
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     private var getFile: File? = null
+    private var getLocation: Location? = null
+
+    private var check: Boolean = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         _fragmentAddStoryBinding = FragmentAddStoryBinding.inflate(inflater, container, false)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         return fragmentAddStoryBinding.root
     }
 
@@ -57,11 +71,28 @@ class AddStoryFragment : Fragment() {
         }
 
         // Button Menu
-        fragmentAddStoryBinding.toolbar.title = "Add Story"
+        fragmentAddStoryBinding.toolbar.title = getString(R.string.add_story)
 
-        fragmentAddStoryBinding.btnCamera.setOnClickListener { startCamera() }
-        fragmentAddStoryBinding.btnGallery.setOnClickListener { startGallery() }
-        fragmentAddStoryBinding.btnUpload.setOnClickListener { uploadImage() }
+        fragmentAddStoryBinding.btnCamera.setOnClickListener {
+            startCamera()
+        }
+
+        fragmentAddStoryBinding.btnGallery.setOnClickListener {
+            startGallery()
+        }
+
+        fragmentAddStoryBinding.scLocation.setOnCheckedChangeListener { _, isChecked ->
+            check = isChecked
+            if(check) {
+                getUserLocation()
+            } else {
+                getLocation = null
+            }
+        }
+
+        fragmentAddStoryBinding.btnUpload.setOnClickListener {
+            uploadImage()
+        }
 
         // Result
         addStoryViewModel.result.observe(viewLifecycleOwner) { status ->
@@ -86,9 +117,9 @@ class AddStoryFragment : Fragment() {
                     showLoading(false)
                 }
 
-                else -> {
+                is ResultState.Loading -> {
                     Toast.makeText(requireContext(), "Loading", Toast.LENGTH_SHORT).show()
-                    showLoading(false)
+                    showLoading(true)
                 }
             }
         }
@@ -99,6 +130,7 @@ class AddStoryFragment : Fragment() {
 
             fragmentAddStoryBinding.btnCamera,
             fragmentAddStoryBinding.btnGallery,
+            fragmentAddStoryBinding.scLocation,
 
             fragmentAddStoryBinding.etDescription,
 
@@ -182,8 +214,8 @@ class AddStoryFragment : Fragment() {
     }
 
     private fun uploadImage() {
-        showLoading(true)
         if (getFile != null) {
+            showLoading(true)
             val desc = fragmentAddStoryBinding.etDescription.text.toString()
             if(desc.isEmpty()) {
                 showLoading(false)
@@ -191,7 +223,42 @@ class AddStoryFragment : Fragment() {
                 fragmentAddStoryBinding.etDescription.requestFocus()
             }
 
-            addStoryViewModel.addStory(desc, getFile as File)
+            var lat: RequestBody? = null
+            var lon: RequestBody? = null
+
+            if (getLocation != null) {
+                lat = getLocation?.latitude.toString().toRequestBody("text/plain".toMediaType())
+                lon = getLocation?.longitude.toString().toRequestBody("text/plain".toMediaType())
+            }
+
+            addStoryViewModel.addStory(desc, getFile as File, lat, lon)
+        } else {
+            Toast.makeText(requireContext(), "Masukkan gambar terlebih dahulu!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                getUserLocation()
+            }
+        }
+
+    private fun getUserLocation() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    getLocation = location
+                }
+            }
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

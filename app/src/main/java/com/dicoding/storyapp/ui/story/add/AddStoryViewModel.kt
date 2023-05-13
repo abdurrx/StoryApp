@@ -9,6 +9,7 @@ import com.dicoding.storyapp.data.response.GeneralResponse
 import com.dicoding.storyapp.utils.ResultState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import okhttp3.RequestBody
 import java.io.File
 import javax.inject.Inject
 
@@ -17,9 +18,9 @@ class AddStoryViewModel @Inject constructor(private val repository: Repository) 
     private val _result = MutableLiveData<ResultState<GeneralResponse>>()
     val result: LiveData<ResultState<GeneralResponse>> = _result
 
-    fun addStory(description: String, file: File) {
+    fun addStory(description: String, file: File, lat: RequestBody? = null, lon: RequestBody? = null) {
         viewModelScope.launch {
-            repository.addStory(description, file).collect {
+            repository.addStory(description, file, lat, lon).collect {
                 _result.postValue(it)
             }
         }

@@ -2,8 +2,10 @@ package com.dicoding.storyapp.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.dicoding.storyapp.data.repository.Repository
 import com.dicoding.storyapp.data.source.local.UserPreferenceImpl
 import com.dicoding.storyapp.data.source.local.UserPreferenceImpl.Companion.PREF_NAME
+import com.dicoding.storyapp.data.source.paging.StoryPagingSource
 import com.dicoding.storyapp.data.source.remote.ApiConfig
 import com.dicoding.storyapp.data.source.remote.ApiService
 import dagger.Module
@@ -34,6 +36,12 @@ class AppModule {
     @Singleton
     fun provideSharedPref(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStoryPagingSource(repository: Repository): StoryPagingSource {
+        return StoryPagingSource(repository)
     }
 
     @Provides
